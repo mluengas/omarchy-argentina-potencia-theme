@@ -19,8 +19,10 @@ CANDIDATES_DIR="$ROOT/work/candidates"
 GENERATED_DIR="$ROOT/work/generated"
 OUTPUT="$CONTACT_DIR/sheet.jpg"
 
+# In montage `-geometry Wx+dx+dy`, dx/dy is a border around each tile, so the
+# cell width is TILE_WIDTH + 2*TILE_BORDER. Keep N*cells <= MAX_TOTAL_WIDTH.
 TILE_WIDTH=640
-TILE_GAP=6
+TILE_BORDER=4
 MAX_TOTAL_WIDTH=2600
 LABEL_FONT="${LABEL_FONT:-Adwaita-Sans}"
 
@@ -68,17 +70,18 @@ echo "Building contact sheet with ${#IMAGES[@]} images..."
 # Total width <= 2600px. With N columns of TILE_WIDTH and (N+1) gaps, require
 # N*TILE_WIDTH + (N+1)*TILE_GAP <= MAX_TOTAL_WIDTH.
 N=${#IMAGES[@]}
+CELL=$(( TILE_WIDTH + 2 * TILE_BORDER ))
 COLS=1
 for candidate_cols in 4 3 2 1; do
     if [[ $candidate_cols -le $N ]]; then
-        width=$(( candidate_cols * TILE_WIDTH + (candidate_cols + 1) * TILE_GAP ))
+        width=$(( candidate_cols * CELL ))
         if [[ $width -le $MAX_TOTAL_WIDTH ]]; then
             COLS=$candidate_cols
             break
         fi
     fi
 done
-echo "  Layout: ${COLS} columns, tile width ${TILE_WIDTH}px"
+echo "  Layout: ${COLS} columns, tile width ${TILE_WIDTH}px (cell ${CELL}px)"
 
 # ── Build labeled montage ──────────────────────────────────────────────────
 # montage applies -label to the next image it encounters, so build a list of
@@ -95,7 +98,7 @@ magick montage \
     -font "$LABEL_FONT" -pointsize 20 -fill '#e8f0f8' \
     -background '#0e1a2b' \
     -tile "${COLS}x" \
-    -geometry "${TILE_WIDTH}x+${TILE_GAP}+${TILE_GAP}" \
+    -geometry "${TILE_WIDTH}x+${TILE_BORDER}+${TILE_BORDER}" \
     -quality 90 \
     "${LABEL_ARGS[@]}" \
     "$OUTPUT"

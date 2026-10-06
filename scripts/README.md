@@ -46,11 +46,16 @@ python3 scripts/finalize.py fitzroy-sunrise perito-moreno jacaranda-skyline
 ## `generate.py`
 
 Generates the two stylized wallpapers via OpenRouter. Picks the best available
-image-output model (prefers Google Gemini image / Nano Banana Pro = Gemini 3 Pro
-Image), names exact palette hex colors in the prompts (`#74acdf`, `#ffffff`,
-`#f6b40e`, `#0e1a2b`), forbids text/watermarks/flags-with-text, and
-crops/upscales to 3840×2160. Saves to `work/generated/<slug>.png` and logs the
-per-call cost from the response `usage`. Hard cap: stops above $2.00 cumulative.
+image-output model, preferring the 4K-capable Gemini image preview builds
+(`google/gemini-3-pro-image-preview`, i.e. Nano Banana Pro; then
+`gemini-3.1-flash-image-preview`). Requests native 4K with
+`image_config: {aspect_ratio: '16:9', image_size: '4K'}`, falls back to Lanczos
+upscaling only if the returned image is narrower than 3840px, and logs the
+returned size. Names exact palette hex colors in the prompts (`#74acdf`,
+`#ffffff`, `#f6b40e`, `#0e1a2b`), forbids text/watermarks/flags-with-text, and
+normalizes to 3840×2160. Saves to `work/generated/<slug>.png` and logs the
+per-call cost from the response `usage`. Hard cap: stops above $2.00 total; set
+`PRIOR_SPEND_USD` (default 0.2789) to carry earlier spend into the cap.
 
 Requires `pi auth print-api-key --provider openrouter`.
 

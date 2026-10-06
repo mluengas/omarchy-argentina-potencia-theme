@@ -11,8 +11,12 @@ Prompts reference exact hex colors from colors.toml:
   - Sol de Mayo gold (yellow): #f6b40e
   - night background: #0e1a2b
 
-Images are saved to work/generated/<slug>.png.  Per-call cost is read from the
-response usage and logged.  Hard cap: stop if cumulative cost exceeds $2.00 USD.
+A native 4K image is requested via image_config (aspect_ratio 16:9, image_size
+4K), supported by the Gemini image *preview* models; upscaling is only a
+fallback when the returned image is still narrower than 3840px.  Images are
+saved to work/generated/<slug>.png.  Per-call cost is read from the response
+usage and logged.  Hard cap: stop if cumulative cost exceeds $2.00 USD across
+runs (prior spend is carried in via PRIOR_SPEND_USD, default 0.2789).
 
 Requires `pi auth print-api-key --provider openrouter` for the API key.
 
@@ -25,6 +29,7 @@ OpenRouter image-generation response shape (verified):
 
 import base64
 import json
+import os
 import subprocess
 import sys
 import urllib.request
@@ -34,7 +39,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 GENERATED_DIR = ROOT / "work" / "generated"
 
-MAX_COST = 2.00  # USD hard cap
+MAX_COST = 2.00  # USD hard cap across ALL runs
+# Cost already spent on the v1 (first-pass) generations.  Subtracted from the
+# cap so the total across runs never exceeds MAX_COST.
+PRIOR_SPEND = float(os.environ.get("PRIOR_SPEND_USD", "0.2789"))
 TARGET_W, TARGET_H = 3840, 2160
 
 # ── Image generation prompts ─────────────────────────────────────────────────
@@ -45,35 +53,55 @@ IMAGE_SPECS = [
         "slug": "sol-de-mayo",
         "prompt": (
             "Create a minimalist flat-vector desktop wallpaper, 16:9, 3840x2160. "
-            "Concept: the Sol de Mayo (Sun of May) rising over a flat geometric "
-            "silhouette of the Andes mountains. "
-            "Palette (use these exact hex colors): night-sky background #0e1a2b; "
-            "celeste blue #74acdf for the sky gradient near the horizon; "
-            "Sol de Mayo gold #f6b40e for the sun and its rays; white #ffffff for "
-            "snow caps and subtle light. Dark, calm, suitable behind a dark UI. "
-            "Clean geometric shapes, crisp vector edges, high detail. "
-            "No text, no letters, no numbers, no watermark, no signature, "
-            "no flags, no flag-like emblems with text. Just the landscape."
+            "\n\n"
+            "SKY: a smooth VERTICAL gradient with NO hard horizontal bands and no "
+            "flat celeste stripe. The top 45% is deep night navy #0e1a2b, then it "
+            "fades downward through #1a2b44 into a soft celeste blue #74acdf glow "
+            "only near the horizon. Leave generous empty dark sky across the top "
+            "half so desktop icons and a top bar remain readable. "
+            "\n\n"
+            "SUBJECT: the Sol de Mayo half-risen behind the central Andes peak. "
+            "It is a golden sun with a face and alternating straight and wavy "
+            "rays. Use gold #f6b40e for the sun and a brown #85340a outline, with "
+            "a subtle warm glow bleeding into the sky around it. "
+            "\n\n"
+            "MOUNTAINS: 3 to 4 layered mountain ridge silhouettes with realistic "
+            "atmospheric perspective (farther ridges are lighter and bluer, "
+            "nearer ridges are darker navy #0e1a2b). Snow caps in white #ffffff "
+            "on the highest peaks. "
+            "\n\n"
+            "STYLE: minimalist flat vector, clean geometric shapes, crisp edges, "
+            "calm. No text, no letters, no numbers, no watermark, no signature, "
+            "no flags, no flag-like emblems with text."
         ),
-        "description": "Minimalist Sol de Mayo rising over Andes silhouette",
+        "description": "Minimalist Sol de Mayo half-risen over layered Andes ridges",
     },
     {
         "slug": "jacaranda-skyline",
         "prompt": (
-            "Create a flat-vector desktop wallpaper of Buenos Aires at dusk, "
-            "16:9, 3840x2160. "
-            "Concept: a city skyline silhouette with the Obelisco, lined with "
-            "jacaranda trees in bloom. "
-            "Palette (use these exact hex colors): deep navy #0e1a2b for the "
-            "skyline and foreground; celeste blue #74acdf for the upper sky; "
-            "Sol de Mayo gold #f6b40e for the warm glow at the horizon; "
-            "jacaranda purple #b490dc for the tree blossoms; "
-            "white #ffffff for stars and highlights. Flat vector style, clean "
-            "geometric shapes, calm dusk mood, suitable behind a dark UI. "
-            "No text, no letters, no numbers, no watermark, no signature, "
-            "no flags, no flag-like emblems with text."
+            "Create a minimalist flat-vector desktop wallpaper of Buenos Aires "
+            "at blue hour, 16:9, 3840x2160. It must be DARK and nocturnal."
+            "\n\n"
+            "SKY: a dark blue-hour gradient. The top is deep navy #0e1a2b, "
+            "fading down to #24426a near the horizon, with a thin warm gold "
+            "#f6b40e band right at the horizon line. The top 40% is mostly empty "
+            "dark sky. No moon. At most a few very faint stars. "
+            "\n\n"
+            "SKYLINE: the Obelisco centered and slender, the rest of the skyline "
+            "as low, dark silhouettes. Very few lit windows: only sparse warm "
+            "gold #f6b40e dots, no cartoon window grids, no big rectangles. "
+            "\n\n"
+            "FOREGROUND: jacaranda canopies in purple #b490dc and light lilac "
+            "#cdb2ec framing the left and right edges, with a few petals drifting "
+            "in the air. The ground is the dark, wide avenue (Avenida 9 de Julio) "
+            "receding toward the Obelisco. Do NOT draw water and do NOT draw a "
+            "reflective water blob or lake. "
+            "\n\n"
+            "STYLE: minimalist flat vector, calm night mood, generous empty dark "
+            "sky at the top. No text, no letters, no numbers, no watermark, no "
+            "signature, no flags, no flag-like emblems with text."
         ),
-        "description": "Flat-vector Buenos Aires skyline with jacarandas at dusk",
+        "description": "Dark blue-hour Buenos Aires skyline, Obelisco and jacarandas",
     },
 ]
 
@@ -113,7 +141,12 @@ def api_post(url: str, api_key: str, body: dict) -> dict:
 
 # Preference keywords in id, highest priority first.  "Nano Banana Pro" is
 # Google's gemini-3-pro-image; the flash variants are its lighter siblings.
+# NOTE: only the *-preview* builds of the Gemini image models accept the 4K
+# image_config, so they are preferred for native 4K output.  The non-preview
+# variants are fallbacks and will be upscaled from ~1K.
 MODEL_PREFERENCES = [
+    "gemini-3-pro-image-preview",   # Nano Banana Pro, native 4K
+    "gemini-3.1-flash-image-preview",  # native 4K
     "gemini-3-pro-image",
     "gemini-3.1-flash-image",
     "gemini-3-flash-image",
@@ -181,17 +214,38 @@ def find_best_image_model(api_key: str) -> dict | None:
 # ── Generation ───────────────────────────────────────────────────────────────
 
 def generate_image(api_key: str, model_id: str, prompt: str, slug: str) -> dict | None:
-    body = {
+    base = {
         "model": model_id,
         "messages": [{"role": "user", "content": prompt}],
         "modalities": ["image", "text"],
+        # Native-resolution request (supported by the Gemini image preview
+        # models on OpenRouter).  Fall back to Lanczos upscaling only if the
+        # returned image is still narrower than 3840px.
+        "image_config": {
+            "aspect_ratio": "16:9",
+            "image_size": "4K",
+        },
     }
-    print(f"\n[{slug}] Sending prompt to {model_id}...")
+    print(f"\n[{slug}] Sending prompt to {model_id} (native 4K requested)...")
     print(f"  Prompt: {prompt[:140]}...")
     try:
-        return api_post("https://openrouter.ai/api/v1/chat/completions", api_key, body)
+        return api_post("https://openrouter.ai/api/v1/chat/completions", api_key, base)
     except urllib.error.HTTPError as e:
         detail = e.read().decode(errors="replace") if e.fp else ""
+        # If 4K image_config is rejected, retry once without it (will upscale).
+        if e.code == 400 and ("image_size" in detail or "not supported" in detail):
+            print(f"  Native 4K not supported by {model_id}; retrying without image_config")
+            retry = dict(base)
+            retry.pop("image_config", None)
+            try:
+                return api_post("https://openrouter.ai/api/v1/chat/completions", api_key, retry)
+            except urllib.error.HTTPError as e2:
+                d2 = e2.read().decode(errors="replace") if e2.fp else ""
+                print(f"  Retry HTTP {e2.code}: {d2[:600]}", file=sys.stderr)
+                return None
+            except Exception as e2:
+                print(f"  Retry failed: {e2}", file=sys.stderr)
+                return None
         print(f"  HTTP {e.code}: {detail[:600]}", file=sys.stderr)
         return None
     except Exception as e:
@@ -279,7 +333,11 @@ def get_cost_from_response(resp: dict) -> float:
 # ── Post-processing ──────────────────────────────────────────────────────────
 
 def ensure_dimensions(slug: str):
-    """Crop/upscale the saved PNG to exactly 3840x2160 if it isn't already."""
+    """Normalize the saved PNG to exactly 3840x2160.
+
+    Logs the size the API actually returned.  Only upscales (Lanczos) when the
+    returned image is narrower than 3840px; larger images are downscaled.
+    """
     img = GENERATED_DIR / f"{slug}.png"
     if not img.exists():
         return
@@ -292,10 +350,16 @@ def ensure_dimensions(slug: str):
     except ValueError:
         print(f"  Could not read dimensions for {slug}")
         return
-    print(f"  Generated dimensions: {w}x{h}")
+    print(f"  Returned size: {w}x{h}")
     if (w, h) == (TARGET_W, TARGET_H):
-        print("  Already at target size")
+        print("  Exactly 3840x2160 — no resize needed")
         return
+
+    if w < TARGET_W or h < TARGET_H:
+        print(f"  Below 4K (w={w}); upscaling with Lanczos")
+    else:
+        print("  Above 4K; downscaling/cropping to 3840x2160")
+
     tmp = GENERATED_DIR / f"{slug}.tmp.png"
     subprocess.run([
         "magick", str(img),
@@ -308,7 +372,7 @@ def ensure_dimensions(slug: str):
         str(tmp),
     ], check=True)
     tmp.replace(img)
-    print(f"  Adjusted to {TARGET_W}x{TARGET_H}")
+    print(f"  Normalized to {TARGET_W}x{TARGET_H}")
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
@@ -333,7 +397,9 @@ def main():
     model_id = model["id"]
     print(f"\nUsing model: {model.get('name', model_id)} ({model_id})\n")
 
-    cumulative = 0.0
+    cumulative = PRIOR_SPEND
+    print(f"Prior spend carried into cap: ${PRIOR_SPEND:.4f} "
+          f"(remaining budget ${MAX_COST - PRIOR_SPEND:.4f})\n")
     for spec in IMAGE_SPECS:
         slug = spec["slug"]
         out = GENERATED_DIR / f"{slug}.png"
@@ -362,7 +428,8 @@ def main():
 
         ensure_dimensions(slug)
 
-    print(f"\nDone. Total generation cost: ${cumulative:.4f}")
+    print(f"\nDone. Total across runs (incl. prior ${PRIOR_SPEND:.4f}): ${cumulative:.4f} "
+          f"of ${MAX_COST:.2f} cap. This run: ${cumulative - PRIOR_SPEND:.4f}")
 
 
 if __name__ == "__main__":
