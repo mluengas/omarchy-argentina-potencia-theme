@@ -13,26 +13,41 @@ For testing, pass a path to a different JSON file as the first argument.
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
 import urllib.error
 from pathlib import Path
-from io import BytesIO
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
-# SPEC-allowed license substrings (case-insensitive matching)
+# SPEC-allowed license markers (case-insensitive matching)
 ALLOWED_LICENSES = [
-    "pd",
     "public domain",
     "cc0",
-    "cc by",       # covers "CC BY 4.0", "CC BY 2.0", etc.
-    "cc-by",       # hyphenated variant
-    "cc by-sa",    # covers "CC BY-SA 4.0", etc.
-    "cc-by-sa",
+    "cc by",        # covers "CC BY 4.0", "CC BY-SA 4.0", etc.
+    "cc-by",        # hyphenated variant
     "unsplash",
 ]
+
+# Forbidden markers: the SPEC says NO NC/ND, and no all-rights-reserved.
+# Checked BEFORE the allowlist so that e.g. "CC BY-NC" is rejected even
+# though it contains "cc by".
+FORBIDDEN_PATTERNS = [
+    r"\bnc\b",                 # noncommercial (as a license modifier token)
+    r"\bnd\b",                 # no-derivatives (as a license modifier token)
+    r"non[ -]?commercial",
+    r"no[ -]?deriv",
+    r"all rights reserved",
+    r"\bcopyright\b",           # unless the string is a PD rationale; see below
+    r"\barr\b",
+]
+
+# Public-domain rationales may legitimately contain the word "copyright"
+# (e.g. "PD-old: copyright expired").  If the string signals PD explicitly we
+# accept it regardless of the word "copyright".
+PD_SIGNALS = ["public domain", "pd-", "pd self", "pd-self", "cc0"]
 
 # Minimum dimensions: 3840×2160, croppable to 16:9 without upscaling.
 # This is equivalent to width >= 3840 and height >= 2160.
@@ -159,12 +174,47 @@ def check_resolution(width: int, height: int) -> bool:
 
 
 def check_license(license_str: str) -> bool:
-    """Return True if license_str matches an allowed license in the SPEC."""
-    lower = license_str.lower().strip()
+    """Return True if license_str matches an allowed license in the SPEC.
+
+    Rejects NC/ND and all-rights-reserved first (the SPEC forbids them), then
+    accepts PD / CC0 / CC BY / CC BY-SA / Unsplash.  A bare "PD" token is
+    accepted (e.g. "PD-self").
+    """
+    s = license_str.lower().strip()
+    if not s:
+        return False
+
+    is_pd = any(sig in s for sig in PD_SIGNALS) or "pd" in re.split(r"[^a-z0-9]+", s)
+
+    # Reject forbidden markers, except the word "copyright" when the string
+    # explicitly signals public domain.
+    for pat in FORBIDDEN_PATTERNS:
+        if re.search(pat, s):
+            if pat == r"\bcopyright\b" and is_pd:
+                continue
+            return False
+
+    if is_pd:
+        return True
     for allowed in ALLOWED_LICENSES:
-        if allowed in lower:
+        if allowed in s:
             return True
     return False
+
+
+def license_failure_reason(license_str: str) -> str:
+    """Human-readable reason a license was rejected."""
+    s = license_str.lower().strip()
+    for pat in FORBIDDEN_PATTERNS:
+        if re.search(pat, s):
+            return (
+                f"license '{license_str}' is forbidden by the SPEC "
+                f"(no NC/ND, no all-rights-reserved)"
+            )
+    return (
+        f"license '{license_str}' not in allowlist "
+        f"({', '.join(ALLOWED_LICENSES)})"
+    )
 
 
 def extract_extension(url: str) -> str:
@@ -255,7 +305,7 @@ def main():
             report.append({
                 "id": cid,
                 "pass": False,
-                "reason": f"license '{license_str}' not in allowlist ({', '.join(ALLOWED_LICENSES)})"
+                "reason": license_failure_reason(license_str),
             })
             continue
 
