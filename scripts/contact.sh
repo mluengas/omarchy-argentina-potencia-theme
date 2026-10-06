@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# contact.sh — Build a labeled contact-sheet grid of passing candidate images
-# plus any images from work/generated/.
+# contact.sh — build labeled review contact sheets from the passing candidates.
 #
-# Reads the pass/fail report from work/candidates/report.json, collects all
-# passing images, appends any files in work/generated/, and uses ImageMagick's
-# `magick montage` to create a labeled grid: id under each tile, tiles ~640px
-# wide, total width <= 2600px.
+# Reads work/candidates/report.json, collects every passing candidate image,
+# and renders TWO sheets so tiles stay readable:
+#   work/contact/sheet-a.jpg
+#   work/contact/sheet-b.jpg
+# 3 columns, tiles 600px wide, with the id label under each tile.
 #
-# Output: work/contact/sheet.jpg
+# Set INCLUDE_GENERATED=1 to also append finalized images from work/generated/
+# (draft *-v1.* files are always skipped, and the result is still split over
+# the same two sheets).
 
 set -euo pipefail
 
@@ -17,25 +19,21 @@ REPORT="$ROOT/work/candidates/report.json"
 CONTACT_DIR="$ROOT/work/contact"
 CANDIDATES_DIR="$ROOT/work/candidates"
 GENERATED_DIR="$ROOT/work/generated"
-OUTPUT="$CONTACT_DIR/sheet.jpg"
 
-# In montage `-geometry Wx+dx+dy`, dx/dy is a border around each tile, so the
-# cell width is TILE_WIDTH + 2*TILE_BORDER. Keep N*cells <= MAX_TOTAL_WIDTH.
-TILE_WIDTH=640
+TILE_WIDTH=600
 TILE_BORDER=4
-MAX_TOTAL_WIDTH=2600
+COLS=3
 LABEL_FONT="${LABEL_FONT:-Adwaita-Sans}"
+INCLUDE_GENERATED="${INCLUDE_GENERATED:-0}"
 
 mkdir -p "$CONTACT_DIR"
 
-# ── Collect passing images from report ─────────────────────────────────────
+# ── Collect passing candidate images ────────────────────────────────────────
 declare -a IMAGES=()
-
 if [[ -f "$REPORT" ]]; then
     pass_ids=$(python3 -c "
 import json
-report = json.load(open('$REPORT'))
-for r in report:
+for r in json.load(open('$REPORT')):
     if r.get('pass'):
         print(r['id'])
 ")
@@ -49,59 +47,59 @@ for r in report:
     done
 fi
 
-# ── Append generated images ────────────────────────────────────────────────
-if [[ -d "$GENERATED_DIR" ]]; then
+# ── Optionally append finalized generated images (skip *-v1 drafts) ─────────
+if [[ "$INCLUDE_GENERATED" == "1" && -d "$GENERATED_DIR" ]]; then
     shopt -s nullglob
     for f in "$GENERATED_DIR"/*.png "$GENERATED_DIR"/*.jpg \
              "$GENERATED_DIR"/*.jpeg "$GENERATED_DIR"/*.webp; do
+        [[ "$(basename "$f")" == *-v1.* ]] && continue
         [[ -f "$f" ]] && IMAGES+=("$f")
     done
     shopt -u nullglob
 fi
 
 if [[ ${#IMAGES[@]} -eq 0 ]]; then
-    echo "No images found for contact sheet — exiting."
+    echo "No images found for contact sheets — exiting."
     exit 0
 fi
 
-echo "Building contact sheet with ${#IMAGES[@]} images..."
-
-# ── Determine grid layout ──────────────────────────────────────────────────
-# Total width <= 2600px. With N columns of TILE_WIDTH and (N+1) gaps, require
-# N*TILE_WIDTH + (N+1)*TILE_GAP <= MAX_TOTAL_WIDTH.
 N=${#IMAGES[@]}
-CELL=$(( TILE_WIDTH + 2 * TILE_BORDER ))
-COLS=1
-for candidate_cols in 4 3 2 1; do
-    if [[ $candidate_cols -le $N ]]; then
-        width=$(( candidate_cols * CELL ))
-        if [[ $width -le $MAX_TOTAL_WIDTH ]]; then
-            COLS=$candidate_cols
-            break
-        fi
+echo "Building 2 contact sheets from ${N} images (${COLS} cols, ${TILE_WIDTH}px tiles)"
+
+# ── Render one sheet ────────────────────────────────────────────────────────
+render_sheet() {
+    local out="$1"; shift
+    local imgs=( "$@" )
+    if [[ ${#imgs[@]} -eq 0 ]]; then
+        echo "  (no images for $out, skipping)"
+        return 0
     fi
-done
-echo "  Layout: ${COLS} columns, tile width ${TILE_WIDTH}px (cell ${CELL}px)"
+    local args=()
+    for img in "${imgs[@]}"; do
+        local stem label
+        stem="$(basename "$img")"
+        label="${stem%.*}"
+        args+=( "-label" "$label" "$img" )
+    done
+    magick montage \
+        -font "$LABEL_FONT" -pointsize 20 -fill '#e8f0f8' \
+        -background '#0e1a2b' \
+        -tile "${COLS}x" \
+        -geometry "${TILE_WIDTH}x+${TILE_BORDER}+${TILE_BORDER}" \
+        -quality 90 \
+        "${args[@]}" \
+        "$out"
+    echo "  wrote $out"
+    magick identify -format '    %f %wx%h\n' "$out"
+}
 
-# ── Build labeled montage ──────────────────────────────────────────────────
-# montage applies -label to the next image it encounters, so build a list of
-# `-label <id> <file>` pairs.  The id is the filename stem (candidate id or
-# generated slug).
-LABEL_ARGS=()
-for img in "${IMAGES[@]}"; do
-    stem="$(basename "$img")"
-    label="${stem%.*}"
-    LABEL_ARGS+=( "-label" "$label" "$img" )
-done
+# ── Split as evenly as possible into exactly two sheets ─────────────────────
+HALF=$(( (N + 1) / 2 ))
+A=( "${IMAGES[@]:0:$HALF}" )
+B=( "${IMAGES[@]:$HALF}" )
 
-magick montage \
-    -font "$LABEL_FONT" -pointsize 20 -fill '#e8f0f8' \
-    -background '#0e1a2b' \
-    -tile "${COLS}x" \
-    -geometry "${TILE_WIDTH}x+${TILE_BORDER}+${TILE_BORDER}" \
-    -quality 90 \
-    "${LABEL_ARGS[@]}" \
-    "$OUTPUT"
+render_sheet "$CONTACT_DIR/sheet-a.jpg" "${A[@]}"
+render_sheet "$CONTACT_DIR/sheet-b.jpg" "${B[@]}"
 
-echo "Contact sheet written to $OUTPUT"
-magick identify "$OUTPUT"
+# Remove the old single sheet, now superseded.
+rm -f "$CONTACT_DIR/sheet.jpg"
