@@ -121,6 +121,9 @@ def regenerate_credits(finalized_ids: list[tuple[str, str]]):
         "attribution. The two AI-generated backgrounds were produced "
         "specifically for this theme and carry the repository's MIT license.",
         "",
+        "All photographs were modified for this theme: cropped to 16:9, resized "
+        "to 3840×2160 and re-encoded as JPEG. No other edits were made.",
+        "",
         "---",
         "",
     ]
