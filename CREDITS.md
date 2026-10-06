@@ -4,6 +4,8 @@ Background images for the **Argentina Potencia** Omarchy theme.
 
 Each photograph remains under its own license, listed below. Images under CC BY-SA or other share-alike licenses remain share-alike: any reuse or adaptation must keep the same license and give the same attribution. The two AI-generated backgrounds were produced specifically for this theme and carry the repository's MIT license.
 
+All photographs were modified for this theme: cropped to 16:9, resized to 3840×2160 and re-encoded as JPEG. No other edits were made.
+
 ---
 
 ## 01-sol-de-mayo.jpg

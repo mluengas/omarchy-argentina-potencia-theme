@@ -16,8 +16,8 @@ omarchy-theme-install https://github.com/<user>/omarchy-argentina-potencia-theme
 
 ## Palette
 
-Defined in `colors.toml` (do not edit — Omarchy generates terminal, editor and
-app themes from it).
+Defined in `colors.toml`; Omarchy generates the terminal, editor and app
+themes from it.
 
 | Name | Hex |
 |------|-----|
