@@ -1,0 +1,35 @@
+mode = "dark"
+
+# Argentina Potencia — celeste y blanco under a Sol de Mayo
+# accent: flag celeste · yellow: Sol de Mayo gold · brown: sun outline
+# magenta: Buenos Aires jacaranda · cyan: Perito Moreno ice · green: la pampa
+
+accent = "#74acdf"
+selection = "#24426a"
+muted = "#55708f"
+
+background = "#0e1a2b"
+dark_background = "#0a1422"
+darker_background = "#060d18"
+lighter_background = "#1a2b44"
+
+foreground = "#e8f0f8"
+dark_foreground = "#7f97b2"
+light_foreground = "#c9d8e8"
+bright_foreground = "#ffffff"
+
+red = "#e5675a"
+yellow = "#f6b40e"
+orange = "#ec8f32"
+green = "#86c48a"
+cyan = "#8fd6ef"
+blue = "#74acdf"
+magenta = "#b490dc"
+brown = "#85340a"
+
+bright_red = "#f08a7e"
+bright_yellow = "#ffcb45"
+bright_green = "#a6dba9"
+bright_cyan = "#b4e6f7"
+bright_blue = "#9cc6ec"
+bright_magenta = "#cdb2ec"
