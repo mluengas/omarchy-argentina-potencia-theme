@@ -40,7 +40,7 @@ TARGET_HEIGHT = 2160
 JPEG_QUALITY = 90
 
 # Generated-image slugs (live in work/generated/) and their credit line.
-GENERATED_SLUGS = {"sol-de-mayo", "jacaranda-skyline"}
+GENERATED_SLUGS = {"sol-de-mayo", "jacaranda-skyline", "vaca-muerta", "pampa-cosecha"}
 GENERATED_CREDIT = "Generated for this theme with Google Nano Banana Pro"
 
 
@@ -118,7 +118,7 @@ def regenerate_credits(finalized_ids: list[tuple[str, str]]):
         "Each photograph remains under its own license, listed below. Images "
         "under CC BY-SA or other share-alike licenses remain share-alike: any "
         "reuse or adaptation must keep the same license and give the same "
-        "attribution. The two AI-generated backgrounds were produced "
+        "attribution. The four AI-generated backgrounds were produced "
         "specifically for this theme and carry the repository's MIT license.",
         "",
         "All photographs were modified for this theme: cropped to 16:9, resized "

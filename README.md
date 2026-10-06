@@ -4,7 +4,7 @@ A dark [Omarchy](https://github.com/basecamp/omarchy) theme built on **celeste y
 blanco** — the sky blue and white of the Argentine flag — with **Sol de Mayo
 gold** and **jacaranda purple** accents. Surfaces are deep navy for low-light
 readability, and the backgrounds range from Patagonian ice and Andean sunsets to
-Buenos Aires at night, all palette-matched and cropped to 3840×2160 so they sit
+Vaca Muerta, the Pampa harvest and Buenos Aires at night, all palette-matched and cropped to 3840×2160 so they sit
 cleanly behind the desktop and bar.
 
 ## Install
@@ -48,20 +48,23 @@ themes from it.
 
 ## Backgrounds
 
-Nine wallpapers in `backgrounds/`, first one is the default. All 3840×2160,
-sRGB, JPEG q90.
+Eleven wallpapers in `backgrounds/`, first one is the default. All 3840×2160,
+sRGB, JPEG q90. Four are illustrations generated for this theme; the rest are
+photographs from Wikimedia Commons.
 
 | # | File | Subject |
 |---|------|---------|
-| 01 | `01-sol-de-mayo.jpg` | Sol de Mayo over the Andes (generated) |
+| 01 | `01-sol-de-mayo.jpg` | Sol de Mayo rising over the Andes, seen from a Mendoza vineyard (illustration) |
 | 02 | `02-perito-moreno-calving.jpg` | Perito Moreno glacier calving wall, Patagonia |
 | 03 | `03-fitzroy-sunset.jpg` | Monte Fitz Roy at sunset, Patagonia |
-| 04 | `04-jacaranda-skyline.jpg` | Buenos Aires skyline at blue hour (generated) |
+| 04 | `04-jacaranda-skyline.jpg` | San Telmo street with jacarandas at blue hour, Obelisco beyond (illustration) |
 | 05 | `05-puerto-madero-night.jpg` | Puerto Madero skyline at night, Buenos Aires |
-| 06 | `06-iguazu-falls-aerial.jpg` | Iguazú Falls from the air, Misiones |
-| 07 | `07-hornocal-humahuaca.jpg` | Serranía de Hornocal, Jujuy |
-| 08 | `08-bariloche-llao-llao.jpg` | Llao Llao and Nahuel Huapi, Bariloche |
-| 09 | `09-ushuaia-valle-carbajal.jpg` | Valle Carbajal near Ushuaia, Tierra del Fuego |
+| 06 | `06-vaca-muerta.jpg` | Drilling rigs at dusk in Vaca Muerta, Neuquén, Volcán Lanín beyond (illustration) |
+| 07 | `07-iguazu-falls-aerial.jpg` | Iguazú Falls from the air, Misiones |
+| 08 | `08-hornocal-humahuaca.jpg` | Serranía de Hornocal, Jujuy |
+| 09 | `09-pampa-cosecha.jpg` | Harvest at dusk on the Pampa húmeda (illustration) |
+| 10 | `10-bariloche-llao-llao.jpg` | Llao Llao and Nahuel Huapi, Bariloche |
+| 11 | `11-ushuaia-valle-carbajal.jpg` | Valle Carbajal near Ushuaia, Tierra del Fuego |
 
 ## Credits & license
 
