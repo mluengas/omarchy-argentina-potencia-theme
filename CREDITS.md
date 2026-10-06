@@ -2,7 +2,7 @@
 
 Background images for the **Argentina Potencia** Omarchy theme.
 
-Each photograph remains under its own license, listed below. Images under CC BY-SA or other share-alike licenses remain share-alike: any reuse or adaptation must keep the same license and give the same attribution. The four AI-generated backgrounds were produced specifically for this theme and carry the repository's MIT license.
+Each photograph remains under its own license, listed below. Images under CC BY-SA or other share-alike licenses remain share-alike: any reuse or adaptation must keep the same license and give the same attribution. The five AI-generated backgrounds were produced specifically for this theme and carry the repository's MIT license.
 
 All photographs were modified for this theme: cropped to 16:9, resized to 3840×2160 and re-encoded as JPEG. No other edits were made.
 
@@ -65,3 +65,7 @@ Generated for this theme with Google Nano Banana Pro
 - **Author:** Godot13
 - **License:** CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0
 - **Source:** https://commons.wikimedia.org/wiki/File:ARG-2016-Aerial-Tierra_del_Fuego_(Ushuaia)%E2%80%93Valle_Carbajal_01.jpg
+
+## 12-potrero.jpg
+
+Generated for this theme with Google Nano Banana Pro

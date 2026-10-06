@@ -4,7 +4,7 @@ A dark [Omarchy](https://github.com/basecamp/omarchy) theme built on **celeste y
 blanco** — the sky blue and white of the Argentine flag — with **Sol de Mayo
 gold** and **jacaranda purple** accents. Surfaces are deep navy for low-light
 readability, and the backgrounds range from Patagonian ice and Andean sunsets to
-Vaca Muerta, the Pampa harvest and Buenos Aires at night, all palette-matched and cropped to 3840×2160 so they sit
+Vaca Muerta, the Pampa harvest, a Rosario potrero and Buenos Aires at night, all palette-matched and cropped to 3840×2160 so they sit
 cleanly behind the desktop and bar.
 
 ## Install
@@ -48,8 +48,8 @@ themes from it.
 
 ## Backgrounds
 
-Eleven wallpapers in `backgrounds/`, first one is the default. All 3840×2160,
-sRGB, JPEG q90. Four are illustrations generated for this theme; the rest are
+Twelve wallpapers in `backgrounds/`, first one is the default. All 3840×2160,
+sRGB, JPEG q90. Five are illustrations generated for this theme; the rest are
 photographs from Wikimedia Commons.
 
 | # | File | Subject |
@@ -65,6 +65,7 @@ photographs from Wikimedia Commons.
 | 09 | `09-pampa-cosecha.jpg` | Harvest at dusk on the Pampa húmeda (illustration) |
 | 10 | `10-bariloche-llao-llao.jpg` | Llao Llao and Nahuel Huapi, Bariloche |
 | 11 | `11-ushuaia-valle-carbajal.jpg` | Valle Carbajal near Ushuaia, Tierra del Fuego |
+| 12 | `12-potrero.jpg` | A kid in a #10 shirt on a Rosario potrero at dusk, three stars on the wall (illustration) |
 
 ## Credits & license
 
