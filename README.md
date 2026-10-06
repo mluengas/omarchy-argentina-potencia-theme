@@ -10,8 +10,7 @@ cleanly behind the desktop and bar.
 ## Install
 
 ```sh
-# TODO: replace <user> with your GitHub username
-omarchy-theme-install https://github.com/<user>/omarchy-argentina-potencia-theme
+omarchy-theme-install https://github.com/mluengas/omarchy-argentina-potencia-theme
 ```
 
 ## Palette
